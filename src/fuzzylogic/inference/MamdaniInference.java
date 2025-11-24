@@ -1,6 +1,5 @@
 package fuzzylogic.inference;
 
-import fuzzylogic.fuzzification.Fuzzifier;
 import fuzzylogic.operators.implications.Implication;
 import fuzzylogic.operators.snorms.SNorm;
 import fuzzylogic.operators.tnorms.TNorm;
@@ -11,10 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Mamdani inference engine supporting multi-antecedent rules
- * with AND/OR operators, weighted rules, and multiple consequents.
- */
+
 public class MamdaniInference implements InferenceEngine {
 
     private final TNorm andOperator;
@@ -23,9 +19,9 @@ public class MamdaniInference implements InferenceEngine {
     private final SNorm aggregation;
 
     public MamdaniInference(TNorm andOperator,
-                            SNorm orOperator,
-                            Implication implication,
-                            SNorm aggregation) {
+            SNorm orOperator,
+            Implication implication,
+            SNorm aggregation) {
         this.andOperator = andOperator;
         this.orOperator = orOperator;
         this.implication = implication;
@@ -35,66 +31,66 @@ public class MamdaniInference implements InferenceEngine {
     @Override
     public Map<FuzzySet, Double> infer(
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs,
-            RuleBase ruleBase
-    ) {
+            RuleBase ruleBase) {
         Map<FuzzySet, Double> outputMap = new HashMap<>();
 
         for (Rule rule : ruleBase.getEnabledRules()) {
 
-            // ---------- Evaluate Antecedent ----------
             double ruleStrength = evaluateAntecedents(rule, fuzzifiedInputs);
 
             // Apply rule weight
             ruleStrength *= rule.getWeight();
 
-            if (ruleStrength == 0)
+            if (ruleStrength <= 0.0)
                 continue;
 
-            // ---------- Apply Implication & Aggregate ----------
             for (Consequent c : rule.getConsequents()) {
+
                 FuzzySet fs = c.getFuzzySet();
+
                 double implied = implication.apply(ruleStrength, 1.0);
 
                 double prev = outputMap.getOrDefault(fs, 0.0);
-                double aggregated = aggregation.apply(prev, implied);
-                outputMap.put(fs, aggregated);
+                double combined = aggregation.apply(prev, implied);
+
+                outputMap.put(fs, combined);
             }
         }
 
-        return outputMap;
+        return outputMap; 
     }
 
 
     private double evaluateAntecedents(
             Rule rule,
-            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs
-    ) {
+            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
         List<Antecedent> ants = rule.getAntecedents();
         List<LogicalOperator> ops = rule.getOperators();
 
-        // Evaluate first antecedent
+        if (ants.isEmpty())
+            return 0.0;
+
+        // First antecedent
         double strength = membershipOf(ants.get(0), fuzzifiedInputs);
 
-        // Combine with others
+        // Combine with remaining
         for (int i = 1; i < ants.size(); i++) {
 
-            double nextValue = membershipOf(ants.get(i), fuzzifiedInputs);
+            double next = membershipOf(ants.get(i), fuzzifiedInputs);
             LogicalOperator op = ops.get(i - 1);
 
             if (op == LogicalOperator.AND)
-                strength = andOperator.apply(strength, nextValue);
+                strength = andOperator.apply(strength, next);
             else
-                strength = orOperator.apply(strength, nextValue);
+                strength = orOperator.apply(strength, next);
         }
 
         return strength;
     }
 
-
     private double membershipOf(
             Antecedent a,
-            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs
-    ) {
+            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
         LinguisticVariable lv = a.getVariable();
         String setName = a.getFuzzySetLabel();
 
@@ -102,6 +98,10 @@ public class MamdaniInference implements InferenceEngine {
         if (fs == null)
             throw new RuntimeException("Unknown fuzzy set: " + setName);
 
-        return fuzzifiedInputs.get(lv).get(fs);
+        Map<FuzzySet, Double> fuzz = fuzzifiedInputs.get(lv);
+        if (fuzz == null)
+            throw new RuntimeException("No fuzzified values for variable: " + lv.getName());
+
+        return fuzz.getOrDefault(fs, 0.0);
     }
 }
