@@ -1,18 +1,12 @@
 package fuzzylogic.rules;
 
-import fuzzylogic.variables.FuzzySet;
-import fuzzylogic.variables.LinguisticVariable;
-
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.*;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class RuleBase {
+
     private final List<Rule> rules = new ArrayList<>();
 
     public void addRule(Rule rule) {
@@ -35,7 +29,10 @@ public class RuleBase {
         return rules.stream().filter(Rule::isEnabled).toList();
     }
 
-    // Simple persistence (JSON, TXT, etc)
+    public List<Rule> getAllRules() {
+        return rules;
+    }
+
     public void saveToFile(String path) throws IOException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             for (Rule r : rules) {
@@ -45,13 +42,12 @@ public class RuleBase {
         }
     }
 
-    public void loadFromFile(String path, RuleParser parser,
-                             Map<String, LinguisticVariable> vars,
-                             Map<String, FuzzySet> outputs) throws IOException {
+    public void loadFromFile(String path,
+                             RuleParser parser) throws IOException {
+
         rules.clear();
         for (String line : Files.readAllLines(Paths.get(path))) {
-            rules.add(parser.parse(line, vars, outputs));
+            rules.add(parser.parse(line));
         }
     }
 }
-

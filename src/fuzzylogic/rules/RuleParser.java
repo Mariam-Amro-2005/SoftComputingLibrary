@@ -2,39 +2,89 @@ package fuzzylogic.rules;
 
 import fuzzylogic.variables.*;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class RuleParser {
 
-    public Rule parse(String ruleText,
-                      Map<String, LinguisticVariable> variables,
-                      Map<String, FuzzySet> outputSets) {
+    private final Map<String, LinguisticVariable> variables;
+    private final Map<String, FuzzySet> outputSets;
 
+    public RuleParser(Map<String, LinguisticVariable> vars,
+                      Map<String, FuzzySet> outputs) {
+        this.variables = vars;
+        this.outputSets = outputs;
+    }
+
+    public Rule parse(String ruleText) {
+
+        Rule rule = new Rule();
         ruleText = ruleText.trim();
 
-        // Split into IF and THEN
+        // Split IF ... THEN ...
         String[] parts = ruleText.split("THEN");
-        String conditionPart = parts[0].replace("IF", "").trim();
-        String resultPart = parts[1].trim();
+        if (parts.length != 2)
+            throw new IllegalArgumentException("Invalid rule syntax: " + ruleText);
 
-        Map<LinguisticVariable, String> antecedents = new HashMap<>();
+        String condPart = parts[0].replace("IF", "").trim();
+        String consPart = parts[1].trim();
 
-        // Handle AND conditions (extendable to OR later)
-        String[] conditions = conditionPart.split("AND");
-        for (String cond : conditions) {
-            String[] tokens = cond.trim().split("is");
-            String varName = tokens[0].trim();
+        // ---- Parse Antecedents ----
+        List<String> tokens = tokenizeConditions(condPart);
+        parseAntecedents(tokens, rule);
+
+        // ---- Parse Consequents ----
+        parseConsequents(consPart, rule);
+
+        return rule;
+    }
+
+    private List<String> tokenizeConditions(String cond) {
+        // Split by spaces while keeping AND/OR as tokens
+        return Arrays.stream(cond.split("\\s+")).toList();
+    }
+
+    private void parseAntecedents(List<String> tokens, Rule rule) {
+        int i = 0;
+        while (i < tokens.size()) {
+
+            String var = tokens.get(i);
+            if (var.equalsIgnoreCase("AND") || var.equalsIgnoreCase("OR")) {
+                rule.addOperator(var.equalsIgnoreCase("AND")
+                        ? LogicalOperator.AND
+                        : LogicalOperator.OR);
+                i++;
+                continue;
+            }
+
+            // var, "is", setName
+            String isToken = tokens.get(i + 1);
+            String setName = tokens.get(i + 2);
+
+            LinguisticVariable lv = variables.get(var);
+            if (lv == null)
+                throw new RuntimeException("Unknown variable: " + var);
+
+            rule.addAntecedent(new Antecedent(lv, setName));
+
+            i += 3;
+        }
+    }
+
+    private void parseConsequents(String text, Rule rule) {
+        // Format: "Risk is High, Alert is Extreme"
+        String[] parts = text.split(",");
+
+        for (String p : parts) {
+            p = p.trim();
+            String[] tokens = p.split("is");
+
             String setName = tokens[1].trim();
 
-            antecedents.put(variables.get(varName), setName);
+            FuzzySet fs = outputSets.get(setName);
+            if (fs == null)
+                throw new RuntimeException("Unknown output fuzzy set: " + setName);
+
+            rule.addConsequent(new Consequent(fs));
         }
-
-        // Parse consequent
-        String[] resultTokens = resultPart.split("is");
-        String outputSetName = resultTokens[1].trim().split(" ")[0];
-        FuzzySet consequent = outputSets.get(outputSetName);
-
-        return new Rule(antecedents, consequent);
     }
 }
