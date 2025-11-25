@@ -1,8 +1,9 @@
+
 package fuzzylogic.operators.tnorms;
 
-public class MinTNorm implements TNorm {
+public class ProductTNorm implements TNorm {
     @Override
     public double apply(double a, double b) {
-        return Math.min(a,b);
+        return a*b;
     }
 }
