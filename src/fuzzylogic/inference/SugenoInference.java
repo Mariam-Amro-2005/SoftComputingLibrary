@@ -50,8 +50,7 @@ public class SugenoInference implements InferenceEngine {
 
                 if (!(cons instanceof SugenoConsequent sc))
                     throw new RuntimeException(
-                            "SugenoInference requires SugenoConsequent, got: " + cons.getType()
-                    );
+                            "SugenoInference requires SugenoConsequent, got: " + cons.getType());
 
                 LinguisticVariable outVar = sc.getOutputVariable();
                 double z = sc.getValue();
@@ -78,13 +77,12 @@ public class SugenoInference implements InferenceEngine {
             crispOutputs.put(outVar, crisp);
         }
 
-        return new InferenceResult(crispOutputs);
+        return new InferenceResult(new SugenoOutput(crispOutputs));
     }
 
-
-    //-----------------------------------------
+    // -----------------------------------------
     // Antecedents evaluation (unchanged)
-    //-----------------------------------------
+    // -----------------------------------------
     private double evaluateAntecedents(
             Rule rule,
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
@@ -92,7 +90,8 @@ public class SugenoInference implements InferenceEngine {
         List<Antecedent> ants = rule.getAntecedents();
         List<LogicalOperator> ops = rule.getOperators();
 
-        if (ants.isEmpty()) return 0.0;
+        if (ants.isEmpty())
+            return 0.0;
 
         double strength = membershipOf(ants.get(0), fuzzifiedInputs);
 
@@ -108,7 +107,6 @@ public class SugenoInference implements InferenceEngine {
 
         return strength;
     }
-
 
     private double membershipOf(
             Antecedent a,
