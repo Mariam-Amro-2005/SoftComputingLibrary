@@ -8,21 +8,40 @@ import java.util.List;
 public class RuleBase {
 
     private final List<Rule> rules = new ArrayList<>();
+    private final AbstractRuleParser parser;
+
+    /**
+     * Constructor: inject the parser (Mamdani or Sugeno)
+     */
+    public RuleBase(AbstractRuleParser parser) {
+        if (parser == null) {
+            throw new IllegalArgumentException("RuleParser cannot be null");
+        }
+        this.parser = parser;
+    }
 
     public void addRule(Rule rule) {
-        rules.add(rule);
+        if (rule != null) {
+            rules.add(rule);
+        }
     }
 
     public void removeRule(int index) {
-        rules.remove(index);
+        if (index >= 0 && index < rules.size()) {
+            rules.remove(index);
+        }
     }
 
     public void enableRule(int index) {
-        rules.get(index).setEnabled(true);
+        if (index >= 0 && index < rules.size()) {
+            rules.get(index).setEnabled(true);
+        }
     }
 
     public void disableRule(int index) {
-        rules.get(index).setEnabled(false);
+        if (index >= 0 && index < rules.size()) {
+            rules.get(index).setEnabled(false);
+        }
     }
 
     public List<Rule> getEnabledRules() {
@@ -30,11 +49,11 @@ public class RuleBase {
     }
 
     public List<Rule> getAllRules() {
-        return rules;
+        return List.copyOf(rules); // immutable copy to prevent external modification
     }
 
     public void saveToFile(String path) throws IOException {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(path))) {
             for (Rule r : rules) {
                 writer.write(r.toString());
                 writer.newLine();
@@ -42,12 +61,26 @@ public class RuleBase {
         }
     }
 
-    public void loadFromFile(String path,
-                             RuleParser parser) throws IOException {
-
+    /**
+     * Load rules from a file using the injected parser.
+     */
+    public void loadFromFile(String path) throws IOException {
         rules.clear();
-        for (String line : Files.readAllLines(Paths.get(path))) {
-            rules.add(parser.parse(line));
+        List<String> lines = Files.readAllLines(Paths.get(path));
+        for (String line : lines) {
+            if (!line.isBlank()) {
+                try {
+                    rules.add(parser.parse(line));
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Skipping invalid rule: " + line + " -> " + e.getMessage());
+                }
+            }
         }
     }
+
+    public void addRuleFromString(String ruleStr) {
+        if (ruleStr == null || ruleStr.isBlank()) return;
+        rules.add(parser.parse(ruleStr));
+    }
+
 }

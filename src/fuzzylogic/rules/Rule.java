@@ -12,8 +12,6 @@ public class Rule {
     private double weight = 1.0;
     private boolean enabled = true;
 
-    public Rule() {}
-
     public void addAntecedent(Antecedent a) {
         antecedents.add(a);
     }
@@ -51,23 +49,25 @@ public class Rule {
     }
 
     public void setEnabled(boolean e) {
-        enabled = e;
+        this.enabled = e;
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("IF ");
+
         for (int i = 0; i < antecedents.size(); i++) {
             sb.append(antecedents.get(i));
-            if (i < operators.size())
+            if (i < operators.size()) {
                 sb.append(" ").append(operators.get(i)).append(" ");
+            }
         }
+
         sb.append(" THEN ");
 
         for (int i = 0; i < consequents.size(); i++) {
             sb.append(consequents.get(i));
-            if (i < consequents.size() - 1)
-                sb.append(", ");
+            if (i < consequents.size() - 1) sb.append(", ");
         }
 
         return sb.toString();

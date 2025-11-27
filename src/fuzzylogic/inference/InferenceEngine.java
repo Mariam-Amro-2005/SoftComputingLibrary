@@ -6,8 +6,9 @@ import fuzzylogic.variables.*;
 import java.util.Map;
 
 public interface InferenceEngine {
-    Map<FuzzySet, Double> infer(
+    InferenceResult infer(
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs,
             RuleBase ruleBase
     );
 }
+
