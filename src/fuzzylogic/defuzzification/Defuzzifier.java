@@ -1,7 +1,6 @@
 package fuzzylogic.defuzzification;
 
 import fuzzylogic.variables.FuzzySet;
-
 import java.util.Map;
 
 public interface Defuzzifier {

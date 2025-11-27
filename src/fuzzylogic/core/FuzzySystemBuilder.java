@@ -1,50 +1,93 @@
 package fuzzylogic.core;
 
 import fuzzylogic.defuzzification.Defuzzifier;
-import fuzzylogic.fuzzification.BasicFuzzifier;
 import fuzzylogic.fuzzification.Fuzzifier;
-import fuzzylogic.inference.InferenceEngine;
-import fuzzylogic.rules.Rule;
+import fuzzylogic.fuzzification.BasicFuzzifier;
+import fuzzylogic.inference.MamdaniInference;
+import fuzzylogic.inference.SugenoInference;
 import fuzzylogic.rules.RuleBase;
+import fuzzylogic.rules.Rule;
 import fuzzylogic.variables.LinguisticVariable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FuzzySystemBuilder {
 
-    private Fuzzifier fuzzifier = new BasicFuzzifier();
-    private InferenceEngine inferenceEngine;
+    private RuleBase ruleBase;
+    private final List<Rule> rules = new ArrayList<>();
+    private FuzzyEngine.Mode mode;
+    private MamdaniInference mamdaniInference;
+    private SugenoInference sugenoInference;
     private Defuzzifier defuzzifier;
-    private RuleBase ruleBase = new RuleBase();
-    private Map<String, LinguisticVariable> variables = new HashMap<>();
+    private Fuzzifier fuzzifier;
 
-    public FuzzySystemBuilder withFuzzifier(Fuzzifier fuzzifier) {
-        this.fuzzifier = fuzzifier;
+    /** Set the rule base for the system */
+    public FuzzySystemBuilder setRuleBase(RuleBase ruleBase) {
+        this.ruleBase = ruleBase;
         return this;
     }
 
-    public FuzzySystemBuilder withInferenceEngine(InferenceEngine engine) {
-        this.inferenceEngine = engine;
+    /** Add a single rule to the system */
+    public FuzzySystemBuilder addRule(Rule rule) {
+        if (rule != null) this.rules.add(rule);
         return this;
     }
 
-    public FuzzySystemBuilder withDefuzzifier(Defuzzifier defuzzifier) {
+    /** Set the mode (MAMDANI or SUGENO) */
+    public FuzzySystemBuilder setMode(FuzzyEngine.Mode mode) {
+        this.mode = mode;
+        return this;
+    }
+
+    /** Set Mamdani inference engine (required for MAMDANI mode) */
+    public FuzzySystemBuilder setMamdaniInference(MamdaniInference inference) {
+        this.mamdaniInference = inference;
+        return this;
+    }
+
+    /** Set Sugeno inference engine (required for SUGENO mode) */
+    public FuzzySystemBuilder setSugenoInference(SugenoInference inference) {
+        this.sugenoInference = inference;
+        return this;
+    }
+
+    /** Set a single system-wide defuzzifier (required for MAMDANI mode) */
+    public FuzzySystemBuilder setDefuzzifier(Defuzzifier defuzzifier) {
         this.defuzzifier = defuzzifier;
         return this;
     }
 
-    public FuzzySystemBuilder addVariable(LinguisticVariable var) {
-        this.variables.put(var.getName(), var);
+    public FuzzySystemBuilder setFuzzifier(Fuzzifier fuzzifier) {
+        this.fuzzifier = fuzzifier;
         return this;
     }
 
-    public FuzzySystemBuilder addRule(Rule rule) {
-        this.ruleBase.addRule(rule);
-        return this;
-    }
-
+    /** Build the FuzzyEngine */
     public FuzzyEngine build() {
-        return new FuzzyEngine(fuzzifier, inferenceEngine, defuzzifier, ruleBase);
+        if (ruleBase == null) throw new IllegalStateException("RuleBase must be set");
+        rules.forEach(ruleBase::addRule);
+
+        if (mode == null) throw new IllegalStateException("Mode must be set");
+
+        if (mode == FuzzyEngine.Mode.MAMDANI) {
+            if (mamdaniInference == null)
+                throw new IllegalStateException("MamdaniInference must be set for MAMDANI mode");
+            if (defuzzifier == null)
+                throw new IllegalStateException("Defuzzifier must be set for MAMDANI mode");
+        } else if (mode == FuzzyEngine.Mode.SUGENO) {
+            if (sugenoInference == null)
+                throw new IllegalStateException("SugenoInference must be set for SUGENO mode");
+        }
+
+        // Build the engine
+        return new FuzzyEngine(
+                ruleBase,
+                mode,
+                mamdaniInference,
+                defuzzifier,
+                sugenoInference,
+                fuzzifier != null ? fuzzifier : new BasicFuzzifier()
+        );
     }
 }

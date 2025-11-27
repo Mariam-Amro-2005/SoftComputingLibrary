@@ -10,9 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-// Zero-order Sugeno inference
-public class SugenoInference implements InferenceEngine {
+public class SugenoInference {
 
     private final TNorm andOperator;
     private final SNorm orOperator;
@@ -22,43 +20,61 @@ public class SugenoInference implements InferenceEngine {
         this.orOperator = orOperator;
     }
 
-    @Override
-    public Map<FuzzySet, Double> infer(Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs, // example: temp -> {low:0.2, medium:0.5, high:0.8}, humidity -> {low:0.7, medium:0.3, high:0.0}
-            RuleBase ruleBase) { // example for ruleBase: if temp is high and humidity is low then fanSpeed is high
-        Map<FuzzySet, Double> outputMap = new HashMap<>();
+    public Map<LinguisticVariable, Double> infer(
+            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs,
+            RuleBase ruleBase) {
 
-        for (Rule rule : ruleBase.getEnabledRules()) { // example of rule: if temp is high and humidity is low then fanSpeed is high
+        Map<LinguisticVariable, Double> weightedSums = new HashMap<>();
+        Map<LinguisticVariable, Double> weightTotals = new HashMap<>();
+
+        for (Rule rule : ruleBase.getEnabledRules()) {
+
             double ruleStrength = evaluateAntecedents(rule, fuzzifiedInputs);
 
             // Apply rule weight
             ruleStrength *= rule.getWeight();
 
-            if (ruleStrength <= 0.0)
-                continue;
+            if (ruleStrength <= 0) continue;
 
+            // Iterate over all Sugeno consequents
             for (Consequent c : rule.getConsequents()) {
-                FuzzySet fs = c.getFuzzySet();
+                if (c.getType() != ConsequentType.SUGENO)
+                    throw new RuntimeException("Expected SugenoConsequent, got " + c.getClass());
 
+                SugenoConsequent sc = (SugenoConsequent) c;
+                LinguisticVariable outVar = sc.getOutputVariable();
+                double value = sc.getValue();
 
-                double prev = outputMap.getOrDefault(fs, 0.0);
-                outputMap.put(fs, prev + ruleStrength);
+                // Weighted sum accumulation
+                weightedSums.put(outVar,
+                        weightedSums.getOrDefault(outVar, 0.0) + ruleStrength * value);
+                weightTotals.put(outVar,
+                        weightTotals.getOrDefault(outVar, 0.0) + ruleStrength);
             }
         }
 
-        return outputMap;
+        // Compute final crisp output for each output variable
+        Map<LinguisticVariable, Double> outputs = new HashMap<>();
+        for (LinguisticVariable var : weightedSums.keySet()) {
+            double sum = weightedSums.get(var);
+            double totalWeight = weightTotals.get(var);
+            outputs.put(var, totalWeight == 0 ? 0.0 : sum / totalWeight);
+        }
+
+        return outputs;
     }
 
-    private double evaluateAntecedents(Rule rule, Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
+    private double evaluateAntecedents(
+            Rule rule,
+            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
+
         List<Antecedent> ants = rule.getAntecedents();
         List<LogicalOperator> ops = rule.getOperators();
 
-        if (ants.isEmpty())
-            return 0.0;
+        if (ants.isEmpty()) return 0.0;
 
-        // First antecedent
         double strength = membershipOf(ants.get(0), fuzzifiedInputs);
 
-        // Combine with remaining
         for (int i = 1; i < ants.size(); i++) {
             double next = membershipOf(ants.get(i), fuzzifiedInputs);
             LogicalOperator op = ops.get(i - 1);
@@ -72,13 +88,15 @@ public class SugenoInference implements InferenceEngine {
         return strength;
     }
 
-    private double membershipOf(Antecedent a, Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
-        LinguisticVariable lv = a.getVariable();
-        String setName = a.getFuzzySetLabel();
+    private double membershipOf(
+            Antecedent a,
+            Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
 
-        FuzzySet fs = lv.getFuzzySetByName(setName);
+        LinguisticVariable lv = a.getVariable();
+        FuzzySet fs = lv.getFuzzySetByName(a.getFuzzySetLabel());
+
         if (fs == null)
-            throw new RuntimeException("Unknown fuzzy set: " + setName);
+            throw new RuntimeException("Unknown fuzzy set: " + a.getFuzzySetLabel());
 
         Map<FuzzySet, Double> fuzz = fuzzifiedInputs.get(lv);
         if (fuzz == null)

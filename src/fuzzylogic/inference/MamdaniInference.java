@@ -10,8 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
-public class MamdaniInference implements InferenceEngine {
+public class MamdaniInference {
 
     private final TNorm andOperator;
     private final SNorm orOperator;
@@ -28,11 +27,19 @@ public class MamdaniInference implements InferenceEngine {
         this.aggregation = aggregation;
     }
 
-    @Override
-    public Map<FuzzySet, Double> infer(
+    /**
+     * Perform Mamdani inference.
+     *
+     * @param fuzzifiedInputs Map of input variables → fuzzified values (FuzzySet →
+     *                        membership)
+     * @param ruleBase        RuleBase containing enabled rules
+     * @return Map of output variable → fuzzy set → aggregated membership
+     */
+    public Map<LinguisticVariable, Map<FuzzySet, Double>> infer(
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs,
             RuleBase ruleBase) {
-        Map<FuzzySet, Double> outputMap = new HashMap<>();
+
+        Map<LinguisticVariable, Map<FuzzySet, Double>> outputMap = new HashMap<>();
 
         for (Rule rule : ruleBase.getEnabledRules()) {
 
@@ -46,36 +53,45 @@ public class MamdaniInference implements InferenceEngine {
 
             for (Consequent c : rule.getConsequents()) {
 
-                FuzzySet fs = c.getFuzzySet();
+                if (c.getType() != ConsequentType.MAMDANI)
+                    continue;
 
-                double implied = implication.apply(ruleStrength, 1.0);
+                MamdaniConsequent mc = (MamdaniConsequent) c;
+                FuzzySet fs = mc.getFuzzySet();
+                LinguisticVariable outVar = mc.getOutputVariable();
 
-                double prev = outputMap.getOrDefault(fs, 0.0);
+                // Implicate fuzzy set with rule strength
+                double implied = implication.apply(ruleStrength, 1.0); // often clipping
+
+                outputMap.putIfAbsent(outVar, new HashMap<>());
+                Map<FuzzySet, Double> varMap = outputMap.get(outVar);
+
+                double prev = varMap.getOrDefault(fs, 0.0);
                 double combined = aggregation.apply(prev, implied);
 
-                outputMap.put(fs, combined);
+                varMap.put(fs, combined);
             }
         }
 
-        return outputMap; 
+        return outputMap;
     }
 
-
+    /**
+     * Evaluate all antecedents of a rule using AND/OR operators.
+     */
     private double evaluateAntecedents(
             Rule rule,
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
+
         List<Antecedent> ants = rule.getAntecedents();
         List<LogicalOperator> ops = rule.getOperators();
 
         if (ants.isEmpty())
             return 0.0;
 
-        // First antecedent
         double strength = membershipOf(ants.get(0), fuzzifiedInputs);
 
-        // Combine with remaining
         for (int i = 1; i < ants.size(); i++) {
-
             double next = membershipOf(ants.get(i), fuzzifiedInputs);
             LogicalOperator op = ops.get(i - 1);
 
@@ -91,6 +107,7 @@ public class MamdaniInference implements InferenceEngine {
     private double membershipOf(
             Antecedent a,
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
+
         LinguisticVariable lv = a.getVariable();
         String setName = a.getFuzzySetLabel();
 

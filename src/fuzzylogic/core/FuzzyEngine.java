@@ -1,8 +1,10 @@
 package fuzzylogic.core;
 
 import fuzzylogic.defuzzification.Defuzzifier;
+import fuzzylogic.fuzzification.BasicFuzzifier;
 import fuzzylogic.fuzzification.Fuzzifier;
-import fuzzylogic.inference.InferenceEngine;
+import fuzzylogic.inference.MamdaniInference;
+import fuzzylogic.inference.SugenoInference;
 import fuzzylogic.rules.RuleBase;
 import fuzzylogic.variables.FuzzySet;
 import fuzzylogic.variables.LinguisticVariable;
@@ -12,33 +14,81 @@ import java.util.Map;
 
 public class FuzzyEngine {
 
+    public enum Mode { MAMDANI, SUGENO }
+
+    private final RuleBase ruleBase;
     private final Fuzzifier fuzzifier;
-    private final InferenceEngine inferenceEngine;
+    private final Mode mode;
+
+    // Mamdani-specific
+    private final MamdaniInference mamdaniInference;
     private final Defuzzifier defuzzifier;
 
-    public FuzzyEngine(Fuzzifier fuzzifier,
-                       InferenceEngine inferenceEngine,
-                       Defuzzifier defuzzifier, RuleBase ruleBase) {
-        this.fuzzifier = fuzzifier;
-        this.inferenceEngine = inferenceEngine;
-        this.defuzzifier = defuzzifier;
+    // Sugeno-specific
+    private final SugenoInference sugenoInference;
+
+    public FuzzyEngine(RuleBase ruleBase,
+                       Mode mode,
+                       MamdaniInference mamdaniInference,
+                       Defuzzifier defuzzifier,
+                       SugenoInference sugenoInference,
+                       Fuzzifier fuzzifier) {
+
+        this.ruleBase = ruleBase;
+        this.mode = mode;
+        this.fuzzifier = fuzzifier != null ? fuzzifier : new BasicFuzzifier();
+
+        if (mode == Mode.MAMDANI) {
+            if (mamdaniInference == null)
+                throw new IllegalArgumentException("MamdaniInference must be set for MAMDANI mode");
+            if (defuzzifier == null)
+                throw new IllegalArgumentException("Defuzzifier must be set for MAMDANI mode");
+
+            this.mamdaniInference = mamdaniInference;
+            this.defuzzifier = defuzzifier;
+            this.sugenoInference = null;
+        } else if (mode == Mode.SUGENO) {
+            if (sugenoInference == null)
+                throw new IllegalArgumentException("SugenoInference must be set for SUGENO mode");
+
+            this.sugenoInference = sugenoInference;
+            this.mamdaniInference = null;
+            this.defuzzifier = null;
+        } else {
+            throw new IllegalArgumentException("Unknown mode: " + mode);
+        }
     }
 
-    public double evaluate(Map<LinguisticVariable, Double> crispInputs, RuleBase ruleBase) {
 
-        // Step 1: Fuzzify all inputs
-        Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzified = new HashMap<>();
-        for (var entry : crispInputs.entrySet()) {
-            fuzzified.put(entry.getKey(),
-                    fuzzifier.fuzzify(entry.getValue(), entry.getKey()));
+    public Map<LinguisticVariable, Double> evaluate(Map<LinguisticVariable, Double> inputs) {
+        // Step 1: Fuzzify all input variables
+        Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs = new HashMap<>();
+        for (var entry : inputs.entrySet()) {
+            fuzzifiedInputs.put(entry.getKey(), fuzzifier.fuzzify(entry.getValue(), entry.getKey()));
         }
 
-        // Step 2: Run inference
-        Map<FuzzySet, Double> inferenceOutput = inferenceEngine.infer(fuzzified, ruleBase);
+        Map<LinguisticVariable, Double> outputs = new HashMap<>();
 
-        // Step 3: Defuzzify to get crisp output
-        return defuzzifier.defuzzify(inferenceOutput);
+        if (mode == Mode.MAMDANI) {
+            // Step 2: Mamdani inference
+            Map<LinguisticVariable, Map<FuzzySet, Double>> inferred =
+                    mamdaniInference.infer(fuzzifiedInputs, ruleBase);
+
+            // Step 3: Single defuzzifier
+            for (var entry : inferred.entrySet()) {
+                outputs.put(entry.getKey(), defuzzifier.defuzzify(entry.getValue()));
+            }
+
+        } else { // SUGENO
+            // Step 2: Sugeno inference (already returns crisp outputs)
+            Map<LinguisticVariable, Double> inferred = sugenoInference.infer(fuzzifiedInputs, ruleBase);
+            outputs.putAll(inferred);
+        }
+
+        return outputs;
     }
+
+//    public void setFuzzifier(Fuzzifier fuzzifier) {
+//        if (fuzzifier != null) this.fuzzifier = fuzzifier;
+//    }
 }
-
-
