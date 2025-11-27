@@ -31,12 +31,10 @@ public class SugenoInference {
 
             double ruleStrength = evaluateAntecedents(rule, fuzzifiedInputs);
 
-            // Apply rule weight
             ruleStrength *= rule.getWeight();
 
             if (ruleStrength <= 0) continue;
 
-            // Iterate over all Sugeno consequents
             for (Consequent c : rule.getConsequents()) {
                 if (c.getType() != ConsequentType.SUGENO)
                     throw new RuntimeException("Expected SugenoConsequent, got " + c.getClass());
@@ -45,7 +43,6 @@ public class SugenoInference {
                 LinguisticVariable outVar = sc.getOutputVariable();
                 double value = sc.getValue();
 
-                // Weighted sum accumulation
                 weightedSums.put(outVar,
                         weightedSums.getOrDefault(outVar, 0.0) + ruleStrength * value);
                 weightTotals.put(outVar,
@@ -53,7 +50,6 @@ public class SugenoInference {
             }
         }
 
-        // Compute final crisp output for each output variable
         Map<LinguisticVariable, Double> outputs = new HashMap<>();
         for (LinguisticVariable var : weightedSums.keySet()) {
             double sum = weightedSums.get(var);

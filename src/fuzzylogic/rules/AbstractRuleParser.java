@@ -16,15 +16,10 @@ public abstract class AbstractRuleParser {
         }
     }
 
-    /**
-     * Parse a rule string and return a Rule object.
-     */
     public abstract Rule parse(String ruleStr);
 
-    // ------------------ Helper methods ------------------ //
 
     protected List<String> tokenize(String ruleStr) {
-        // Simple split by space and remove commas from consequents
         return Arrays.asList(ruleStr.replace(",", " , ").trim().split("\\s+"));
     }
 

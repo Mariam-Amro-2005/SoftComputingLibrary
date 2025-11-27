@@ -4,9 +4,7 @@ import fuzzylogic.variables.FuzzySet;
 import fuzzylogic.variables.LinguisticVariable;
 import java.util.Map;
 
-/**
- * Mean of Maximum (MOM) defuzzifier.
- */
+
 public class MeanOfMaxDefuzzifier extends BaseMamdaniDefuzzifier {
 
     public MeanOfMaxDefuzzifier(LinguisticVariable outputVar) {

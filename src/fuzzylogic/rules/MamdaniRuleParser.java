@@ -20,9 +20,8 @@ public class MamdaniRuleParser extends AbstractRuleParser {
         if (!tokens.get(i).equalsIgnoreCase("IF"))
             throw new IllegalArgumentException("Rule must start with IF");
 
-        i++; // skip "IF"
+        i++;
 
-        // Parse antecedents
         while (i < tokens.size() && !tokens.get(i).equalsIgnoreCase("THEN")) {
             String varName = tokens.get(i++);
             if (!tokens.get(i++).equalsIgnoreCase("IS"))
@@ -32,7 +31,6 @@ public class MamdaniRuleParser extends AbstractRuleParser {
             FuzzySet set = getFuzzySet(var, setLabel);
             rule.addAntecedent(new Antecedent(var, set.getLabel()));
 
-            // Check for AND / OR
             if (i < tokens.size() && (tokens.get(i).equalsIgnoreCase("AND") || tokens.get(i).equalsIgnoreCase("OR"))) {
                 rule.addOperator(parseOperator(tokens.get(i++)));
             }
@@ -41,12 +39,11 @@ public class MamdaniRuleParser extends AbstractRuleParser {
         if (i >= tokens.size() || !tokens.get(i).equalsIgnoreCase("THEN"))
             throw new IllegalArgumentException("Expected THEN keyword in rule");
 
-        i++; // skip THEN
+        i++;
 
-        // Parse consequents (comma-separated)
         while (i < tokens.size()) {
             if (tokens.get(i).equals(",")) {
-                i++; // skip comma
+                i++;
                 continue;
             }
             String varName = tokens.get(i++);

@@ -1,15 +1,12 @@
 package fuzzylogic.membership;
 
-/**
- * Represents a single line segment of a membership function.
- * Defined by slope m and intercept c over a domain [startX, endX].
- */
+
 public class LineSegment {
 
     public final double startX;
     public final double endX;
-    public final double m;   // slope
-    public final double c;   // intercept
+    public final double m;
+    public final double c;
 
     public LineSegment(double startX, double endX, double m, double c) {
         this.startX = startX;

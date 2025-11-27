@@ -20,11 +20,9 @@ public class FuzzyEngine {
     private final Fuzzifier fuzzifier;
     private final Mode mode;
 
-    // Mamdani-specific
     private final MamdaniInference mamdaniInference;
     private final Defuzzifier defuzzifier;
 
-    // Sugeno-specific
     private final SugenoInference sugenoInference;
 
     public FuzzyEngine(RuleBase ruleBase,
@@ -61,7 +59,6 @@ public class FuzzyEngine {
 
 
     public Map<LinguisticVariable, Double> evaluate(Map<LinguisticVariable, Double> inputs) {
-        // Step 1: Fuzzify all input variables
         Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs = new HashMap<>();
         for (var entry : inputs.entrySet()) {
             fuzzifiedInputs.put(entry.getKey(), fuzzifier.fuzzify(entry.getValue(), entry.getKey()));
@@ -70,17 +67,14 @@ public class FuzzyEngine {
         Map<LinguisticVariable, Double> outputs = new HashMap<>();
 
         if (mode == Mode.MAMDANI) {
-            // Step 2: Mamdani inference
             Map<LinguisticVariable, Map<FuzzySet, Double>> inferred =
                     mamdaniInference.infer(fuzzifiedInputs, ruleBase);
 
-            // Step 3: Single defuzzifier
             for (var entry : inferred.entrySet()) {
                 outputs.put(entry.getKey(), defuzzifier.defuzzify(entry.getValue()));
             }
 
-        } else { // SUGENO
-            // Step 2: Sugeno inference (already returns crisp outputs)
+        } else {
             Map<LinguisticVariable, Double> inferred = sugenoInference.infer(fuzzifiedInputs, ruleBase);
             outputs.putAll(inferred);
         }
@@ -88,7 +82,4 @@ public class FuzzyEngine {
         return outputs;
     }
 
-//    public void setFuzzifier(Fuzzifier fuzzifier) {
-//        if (fuzzifier != null) this.fuzzifier = fuzzifier;
-//    }
 }

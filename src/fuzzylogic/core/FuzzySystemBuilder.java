@@ -22,37 +22,31 @@ public class FuzzySystemBuilder {
     private Defuzzifier defuzzifier;
     private Fuzzifier fuzzifier;
 
-    /** Set the rule base for the system */
     public FuzzySystemBuilder setRuleBase(RuleBase ruleBase) {
         this.ruleBase = ruleBase;
         return this;
     }
 
-    /** Add a single rule to the system */
     public FuzzySystemBuilder addRule(Rule rule) {
         if (rule != null) this.rules.add(rule);
         return this;
     }
 
-    /** Set the mode (MAMDANI or SUGENO) */
     public FuzzySystemBuilder setMode(FuzzyEngine.Mode mode) {
         this.mode = mode;
         return this;
     }
 
-    /** Set Mamdani inference engine (required for MAMDANI mode) */
     public FuzzySystemBuilder setMamdaniInference(MamdaniInference inference) {
         this.mamdaniInference = inference;
         return this;
     }
 
-    /** Set Sugeno inference engine (required for SUGENO mode) */
     public FuzzySystemBuilder setSugenoInference(SugenoInference inference) {
         this.sugenoInference = inference;
         return this;
     }
 
-    /** Set a single system-wide defuzzifier (required for MAMDANI mode) */
     public FuzzySystemBuilder setDefuzzifier(Defuzzifier defuzzifier) {
         this.defuzzifier = defuzzifier;
         return this;
@@ -63,7 +57,6 @@ public class FuzzySystemBuilder {
         return this;
     }
 
-    /** Build the FuzzyEngine */
     public FuzzyEngine build() {
         if (ruleBase == null) throw new IllegalStateException("RuleBase must be set");
         rules.forEach(ruleBase::addRule);
@@ -80,7 +73,6 @@ public class FuzzySystemBuilder {
                 throw new IllegalStateException("SugenoInference must be set for SUGENO mode");
         }
 
-        // Build the engine
         return new FuzzyEngine(
                 ruleBase,
                 mode,
