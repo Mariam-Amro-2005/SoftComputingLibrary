@@ -82,4 +82,9 @@ public class FuzzyEngine {
         return outputs;
     }
 
+    public SugenoInference getSugenoInference() {
+        return sugenoInference;
+    }
+
+
 }

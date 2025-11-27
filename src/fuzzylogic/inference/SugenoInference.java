@@ -100,4 +100,12 @@ public class SugenoInference {
 
         return fuzz.getOrDefault(fs, 0.0);
     }
+
+    public double computeRuleActivation(Rule rule,
+                                        Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
+        if (rule == null) return 0.0;
+        double strength = evaluateAntecedents(rule, fuzzifiedInputs);
+        strength *= rule.getWeight();
+        return strength;
+    }
 }
