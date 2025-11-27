@@ -1,9 +1,10 @@
 package fuzzylogic.defuzzification;
 
 import fuzzylogic.variables.FuzzySet;
+import fuzzylogic.variables.LinguisticVariable;
 
 import java.util.Map;
 
 public interface Defuzzifier {
-    double defuzzify(Map<FuzzySet, Double> aggregatedOutput);
+    Map<LinguisticVariable, Double> defuzzify(Map<LinguisticVariable, Map<FuzzySet, Double>> aggregatedOutput);
 }
