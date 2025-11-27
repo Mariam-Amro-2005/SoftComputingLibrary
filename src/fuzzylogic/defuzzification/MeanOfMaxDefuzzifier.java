@@ -1,57 +1,62 @@
 package fuzzylogic.defuzzification;
 
-import fuzzylogic.variables.*;
+import fuzzylogic.variables.FuzzySet;
+import fuzzylogic.variables.LinguisticVariable;
 
+import java.util.HashMap;
 import java.util.Map;
 
-public class MeanOfMaxDefuzzifier extends BaseMamdaniDefuzzifier {
+public class MeanOfMaxDefuzzifier extends BaseMamdaniDefuzzifier implements Defuzzifier {
 
-    public MeanOfMaxDefuzzifier(LinguisticVariable outputVar) {
-        super(outputVar, 1001);
+    public MeanOfMaxDefuzzifier() {
+        super(1001);
     }
 
-    public MeanOfMaxDefuzzifier(LinguisticVariable outputVar, int samples) {
-        super(outputVar, samples);
+    public MeanOfMaxDefuzzifier(int samples) {
+        super(samples);
     }
 
     @Override
-    public double defuzzify(Map<FuzzySet, Double> aggregatedOutput) {
+    public Map<LinguisticVariable, Double> defuzzify(Map<LinguisticVariable, Map<FuzzySet, Double>> aggregatedOutput) {
+        Map<LinguisticVariable, Double> crispOutputs = new HashMap<>();
 
-        if (aggregatedOutput == null || aggregatedOutput.isEmpty())
-            return midpoint();
+        for (var entry : aggregatedOutput.entrySet()) {
+            LinguisticVariable lv = entry.getKey();
+            Map<FuzzySet, Double> fsMap = entry.getValue();
 
-        double start = outputVar.getDomainStart();
-        double end   = outputVar.getDomainEnd();
-        double step  = (end - start) / (samples - 1);
+            double start = lv.getDomainStart();
+            double end = lv.getDomainEnd();
+            double step = (end - start) / (samples - 1);
 
-        // First pass: find max membership
-        double maxu = 0;
-        for (int i = 0; i < samples; i++) {
-            double x = start + i * step;
-            double u = aggregatedMembership(aggregatedOutput, x);
-            if (u > maxu) maxu = u;
-        }
-
-        if (maxu == 0) return midpoint();
-
-        // Second pass: mean of all x with u == maxu
-        double sum = 0;
-        int count = 0;
-
-        for (int i = 0; i < samples; i++) {
-            double x = start + i * step;
-            double u = aggregatedMembership(aggregatedOutput, x);
-
-            if (Math.abs(u - maxu) < 1e-9) {
-                sum += x;
-                count++;
+            // First pass: find max membership
+            double maxu = 0;
+            for (int i = 0; i < samples; i++) {
+                double x = start + i * step;
+                double u = aggregatedMembership(fsMap, x);
+                if (u > maxu) maxu = u;
             }
+
+            if (maxu == 0) {
+                crispOutputs.put(lv, midpoint(lv));
+                continue;
+            }
+
+            // Second pass: mean of all x with u == maxu
+            double sum = 0;
+            int count = 0;
+
+            for (int i = 0; i < samples; i++) {
+                double x = start + i * step;
+                double u = aggregatedMembership(fsMap, x);
+                if (Math.abs(u - maxu) < 1e-9) {
+                    sum += x;
+                    count++;
+                }
+            }
+
+            crispOutputs.put(lv, sum / count);
         }
 
-        return sum / count;
-    }
-
-    private double midpoint() {
-        return (outputVar.getDomainStart() + outputVar.getDomainEnd()) / 2.0;
+        return crispOutputs;
     }
 }

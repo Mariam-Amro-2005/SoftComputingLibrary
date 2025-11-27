@@ -5,22 +5,19 @@ import fuzzylogic.variables.LinguisticVariable;
 
 import java.util.Map;
 
-public abstract class BaseMamdaniDefuzzifier implements Defuzzifier {
+public abstract class BaseMamdaniDefuzzifier {
 
-    protected final LinguisticVariable outputVar;
     protected final int samples;
 
-    protected BaseMamdaniDefuzzifier(LinguisticVariable outputVar, int samples) {
-        if (samples < 3)
-            throw new IllegalArgumentException("Samples must be >= 3");
-        this.outputVar = outputVar;
+    protected BaseMamdaniDefuzzifier(int samples) {
+        if (samples < 3) throw new IllegalArgumentException("Samples must be >= 3");
         this.samples = samples;
     }
 
-    protected double aggregatedMembership(
-            Map<FuzzySet, Double> aggregatedOutput,
-            double x) {
-
+    /**
+     * Compute aggregated membership for a specific variable at x
+     */
+    protected double aggregatedMembership(Map<FuzzySet, Double> aggregatedOutput, double x) {
         double max = 0.0;
 
         for (var entry : aggregatedOutput.entrySet()) {
@@ -32,5 +29,9 @@ public abstract class BaseMamdaniDefuzzifier implements Defuzzifier {
         }
 
         return max;
+    }
+
+    protected double midpoint(LinguisticVariable lv) {
+        return (lv.getDomainStart() + lv.getDomainEnd()) / 2.0;
     }
 }
