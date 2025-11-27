@@ -18,7 +18,7 @@ public class BasicFuzzifier implements Fuzzifier {
         Map<FuzzySet, Double> results = new HashMap<>();
 
         for (FuzzySet set : variable.getSets()) {
-            if (set == null) continue; // skip null sets just in case
+            if (set == null) continue;
             double membership = set.getMembership(crispValue);
             results.put(set, membership);
         }
@@ -27,6 +27,6 @@ public class BasicFuzzifier implements Fuzzifier {
             System.err.println("Warning: No fuzzy sets found for variable " + variable.getName());
         }
 
-        return Collections.unmodifiableMap(results); // prevent external modification
+        return Collections.unmodifiableMap(results);
     }
 }

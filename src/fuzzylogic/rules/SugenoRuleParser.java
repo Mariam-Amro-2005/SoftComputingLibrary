@@ -18,9 +18,8 @@ public class SugenoRuleParser extends AbstractRuleParser {
 
         if (!tokens.get(i).equalsIgnoreCase("IF"))
             throw new IllegalArgumentException("Rule must start with IF");
-        i++; // skip IF
+        i++;
 
-        // Parse antecedents
         while (i < tokens.size() && !tokens.get(i).equalsIgnoreCase("THEN")) {
             String varName = tokens.get(i++);
             if (!tokens.get(i++).equalsIgnoreCase("IS"))
@@ -36,9 +35,8 @@ public class SugenoRuleParser extends AbstractRuleParser {
 
         if (i >= tokens.size() || !tokens.get(i).equalsIgnoreCase("THEN"))
             throw new IllegalArgumentException("Expected THEN keyword in rule");
-        i++; // skip THEN
+        i++;
 
-        // Parse Sugeno consequents (Variable = value)
         while (i < tokens.size()) {
             if (tokens.get(i).equals(",")) {
                 i++;

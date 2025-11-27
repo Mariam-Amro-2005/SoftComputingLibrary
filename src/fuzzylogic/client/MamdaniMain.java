@@ -29,7 +29,7 @@ public class MamdaniMain {
 
         LinguisticVariable speed = new LinguisticVariable("Speed", 0, 120, List.of(speedLow, speedMedium, speedHigh));
 
-        // ---------------- Input Variable: Braking ----------------
+
         FuzzySet brakingLow = new FuzzySet("Low", mfFactory.create("triangular", 0, 20, 40));
         FuzzySet brakingMedium = new FuzzySet("Medium", mfFactory.create("triangular", 20, 60, 100));
         FuzzySet brakingHigh = new FuzzySet("High", mfFactory.create("triangular", 60, 100, 120));
@@ -37,21 +37,18 @@ public class MamdaniMain {
         LinguisticVariable braking = new LinguisticVariable("Braking", 0, 120,
                 List.of(brakingLow, brakingMedium, brakingHigh));
 
-        // ---------------- Output Variable: Risk ----------------
         FuzzySet riskLow = new FuzzySet("Low", mfFactory.create("triangular", 0, 20, 40));
         FuzzySet riskMedium = new FuzzySet("Medium", mfFactory.create("triangular", 20, 60, 100));
         FuzzySet riskHigh = new FuzzySet("High", mfFactory.create("triangular", 60, 100, 120));
 
         LinguisticVariable risk = new LinguisticVariable("Risk", 0, 100, List.of(riskLow, riskMedium, riskHigh));
 
-        // ---------------- Rule Base ----------------
         RuleBase ruleBase = new RuleBase(new MamdaniRuleParser(List.of(speed, braking, risk)));
 
         ruleBase.addRuleFromString("IF Speed is Low AND Braking is Low THEN Risk is Low");
         ruleBase.addRuleFromString("IF Speed is High OR Braking is High THEN Risk is High");
         ruleBase.addRuleFromString("IF Speed is Medium AND Braking is Medium THEN Risk is Medium");
 
-        // ---------------- Fuzzify Inputs ----------------
         double inputSpeed = 30.0;
         double inputBraking = 90.0;
 
@@ -60,7 +57,6 @@ public class MamdaniMain {
         fuzzifiedInputs.put(speed, fuzzifier.fuzzify(inputSpeed, speed));
         fuzzifiedInputs.put(braking, fuzzifier.fuzzify(inputBraking, braking));
 
-        // ---------------- Mamdani Inference ----------------
         MamdaniInference mamdani = new MamdaniInference(
                 new MinTNorm(),
                 new MaxSNorm(),
@@ -69,7 +65,6 @@ public class MamdaniMain {
 
         Map<LinguisticVariable, Map<FuzzySet, Double>> results = mamdani.infer(fuzzifiedInputs, ruleBase);
 
-        // ---------------- Display ----------------
         System.out.println("\nFuzzified Inputs:");
         fuzzifiedInputs.forEach((var, memberships) -> {
             System.out.println("  " + var.getName() + " = " + (var == speed ? inputSpeed : inputBraking));

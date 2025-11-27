@@ -27,6 +27,5 @@ public class DriverRiskRules {
         r2.addConsequent(new MamdaniConsequent(risk, risk.getFuzzySetByName("Low")));
         ruleBase.addRule(r2);
 
-        // add more rules as needed...
     }
 }

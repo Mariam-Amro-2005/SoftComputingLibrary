@@ -10,9 +10,6 @@ public class RuleBase {
     private final List<Rule> rules = new ArrayList<>();
     private final AbstractRuleParser parser;
 
-    /**
-     * Constructor: inject the parser (Mamdani or Sugeno)
-     */
     public RuleBase(AbstractRuleParser parser) {
         if (parser == null) {
             throw new IllegalArgumentException("RuleParser cannot be null");
@@ -61,9 +58,6 @@ public class RuleBase {
         }
     }
 
-    /**
-     * Load rules from a file using the injected parser.
-     */
     public void loadFromFile(String path) throws IOException {
         rules.clear();
         List<String> lines = Files.readAllLines(Paths.get(path));

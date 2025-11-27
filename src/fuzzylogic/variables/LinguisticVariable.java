@@ -18,7 +18,6 @@ public class LinguisticVariable {
         setSets(sets); // deep copy
     }
 
-    // ---------------- Getters ---------------- //
 
     public String getName() {
         return name;
@@ -36,7 +35,6 @@ public class LinguisticVariable {
         return Collections.unmodifiableList(sets);
     }
 
-    // ---------------- Setters ---------------- //
 
     public void setName(String name) {
         this.name = name;
@@ -62,8 +60,6 @@ public class LinguisticVariable {
             this.sets.add(s.copy());
         }
     }
-
-    // ---------------- Helpers ---------------- //
 
 
     public FuzzySet getFuzzySetByName(String label) {

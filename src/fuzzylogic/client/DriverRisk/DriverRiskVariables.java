@@ -12,7 +12,7 @@ public class DriverRiskVariables {
         return new LinguisticVariable("Speed", 0, 200, List.of(
                 new FuzzySet("Slow", MembershipFactory.create("trapezoidal", 0, 0, 40, 60)),
                 new FuzzySet("Normal", MembershipFactory.create("triangular", 50, 80, 110)),
-                new FuzzySet("Fast", MembershipFactory.create("trapezoidal", 100, 140, 200, 200))
+                new FuzzySet("Fast", MembershipFactory.create("trapezoidal", 100, 140, 160, 200))
         ));
     }
 

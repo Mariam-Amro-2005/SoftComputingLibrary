@@ -25,14 +25,12 @@ public class TriangularMF implements MembershipFunction {
     }
 
     private void buildSegments() {
-        // Rising edge: a → b (0 → 1)
         if (b > a) {
             double m1 = 1.0 / (b - a);
             double c1 = -a * m1;
             segments.add(new LineSegment(a, b, m1, c1));
         }
 
-        // Falling edge: b → c (1 → 0)
         if (c > b) {
             double m2 = -1.0 / (c - b);
             double c2 = 1.0 - m2 * b;

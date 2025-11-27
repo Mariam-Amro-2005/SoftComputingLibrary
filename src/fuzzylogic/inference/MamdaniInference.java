@@ -27,14 +27,6 @@ public class MamdaniInference {
         this.aggregation = aggregation;
     }
 
-    /**
-     * Perform Mamdani inference.
-     *
-     * @param fuzzifiedInputs Map of input variables → fuzzified values (FuzzySet →
-     *                        membership)
-     * @param ruleBase        RuleBase containing enabled rules
-     * @return Map of output variable → fuzzy set → aggregated membership
-     */
     public Map<LinguisticVariable, Map<FuzzySet, Double>> infer(
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs,
             RuleBase ruleBase) {
@@ -45,7 +37,6 @@ public class MamdaniInference {
 
             double ruleStrength = evaluateAntecedents(rule, fuzzifiedInputs);
 
-            // Apply rule weight
             ruleStrength *= rule.getWeight();
 
             if (ruleStrength <= 0.0)
@@ -60,7 +51,6 @@ public class MamdaniInference {
                 FuzzySet fs = mc.getFuzzySet();
                 LinguisticVariable outVar = mc.getOutputVariable();
 
-                // Implicate fuzzy set with rule strength
                 double implied = implication.apply(ruleStrength, 1.0); // often clipping
 
                 outputMap.putIfAbsent(outVar, new HashMap<>());
@@ -76,9 +66,6 @@ public class MamdaniInference {
         return outputMap;
     }
 
-    /**
-     * Evaluate all antecedents of a rule using AND/OR operators.
-     */
     private double evaluateAntecedents(
             Rule rule,
             Map<LinguisticVariable, Map<FuzzySet, Double>> fuzzifiedInputs) {
