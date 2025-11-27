@@ -1,9 +1,7 @@
 package fuzzylogic.client;
 
 import fuzzylogic.fuzzification.BasicFuzzifier;
-import fuzzylogic.inference.InferenceResult;
 import fuzzylogic.inference.SugenoInference;
-import fuzzylogic.inference.SugenoOutput;
 import fuzzylogic.membership.*;
 import fuzzylogic.operators.snorms.MaxSNorm;
 import fuzzylogic.operators.tnorms.MinTNorm;
@@ -123,14 +121,13 @@ public class SugenoMain {
             }
             System.out.println("}");
 
-            InferenceResult result = inference.infer(fuzzifiedInputs, ruleBase);
+            Map<LinguisticVariable, Double> result = inference.infer(fuzzifiedInputs, ruleBase);
 
-            if (result.isSugeno()) {
-                SugenoOutput output = result.getSugenoOutput();
-                double tipAmount = output.get(tip);
+            Double tipAmount = result.get(tip);
+            if (tipAmount != null) {
                 System.out.printf("  Output: Tip = %.2f%%\n", tipAmount);
             } else {
-                System.err.println("  Error: Expected Sugeno output!");
+                System.err.println("  Error: No tip output calculated!");
             }
 
             System.out.println();
