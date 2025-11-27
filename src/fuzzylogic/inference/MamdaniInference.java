@@ -18,9 +18,9 @@ public class MamdaniInference {
     private final SNorm aggregation;
 
     public MamdaniInference(TNorm andOperator,
-                            SNorm orOperator,
-                            Implication implication,
-                            SNorm aggregation) {
+            SNorm orOperator,
+            Implication implication,
+            SNorm aggregation) {
         this.andOperator = andOperator;
         this.orOperator = orOperator;
         this.implication = implication;
@@ -30,7 +30,8 @@ public class MamdaniInference {
     /**
      * Perform Mamdani inference.
      *
-     * @param fuzzifiedInputs Map of input variables → fuzzified values (FuzzySet → membership)
+     * @param fuzzifiedInputs Map of input variables → fuzzified values (FuzzySet →
+     *                        membership)
      * @param ruleBase        RuleBase containing enabled rules
      * @return Map of output variable → fuzzy set → aggregated membership
      */
@@ -47,11 +48,13 @@ public class MamdaniInference {
             // Apply rule weight
             ruleStrength *= rule.getWeight();
 
-            if (ruleStrength <= 0.0) continue;
+            if (ruleStrength <= 0.0)
+                continue;
 
             for (Consequent c : rule.getConsequents()) {
 
-                if (c.getType() != ConsequentType.MAMDANI) continue;
+                if (c.getType() != ConsequentType.MAMDANI)
+                    continue;
 
                 MamdaniConsequent mc = (MamdaniConsequent) c;
                 FuzzySet fs = mc.getFuzzySet();
@@ -83,7 +86,8 @@ public class MamdaniInference {
         List<Antecedent> ants = rule.getAntecedents();
         List<LogicalOperator> ops = rule.getOperators();
 
-        if (ants.isEmpty()) return 0.0;
+        if (ants.isEmpty())
+            return 0.0;
 
         double strength = membershipOf(ants.get(0), fuzzifiedInputs);
 
