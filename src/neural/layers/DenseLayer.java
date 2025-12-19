@@ -8,35 +8,52 @@ import neural.utils.Matrix;
 
 public class DenseLayer implements Layer {
 
-    private final ActivationFunction activation;
+    private final int inputSize;
+    private final int outputSize;
 
-    private double[][] weights;
-    private double[][] bias;
-
-    // Cached values for backpropagation
-    private double[][] inputCache;
-    private double[][] zCache;
+    private final double[][] weights;
+    private final double[][] biases;
 
     // Gradients
     private double[][] gradWeights;
-    private double[][] gradBias;
+    private double[][] gradBiases;
+
+    // Cached values
+    private double[][] input;
+    private double[][] z;
+
+    private final ActivationFunction activation;
 
     public DenseLayer(int inputSize,
                       int outputSize,
                       ActivationFunction activation,
                       Initializer initializer) {
 
+        this.inputSize = inputSize;
+        this.outputSize = outputSize;
         this.activation = activation;
+
         this.weights = initializer.init(inputSize, outputSize);
-        this.bias = new double[1][outputSize];
+        this.biases = new double[1][outputSize];
     }
 
     @Override
     public double[][] forward(double[][] input) {
-        this.inputCache = input;
+        this.input = input;
+        int batchSize = input.length;
 
-        double[][] z = Matrix.add(Matrix.dot(input, weights), bias);
-        this.zCache = z;
+        z = new double[batchSize][outputSize];
+
+        for (int b = 0; b < batchSize; b++) {
+            for (int i = 0; i < outputSize; i++) {
+                double sum = 0.0;
+                for (int j = 0; j < inputSize; j++) {
+                    sum += input[b][j]*weights[i][j] ;
+                }
+                sum += biases[0][i];
+                z[b][i] = sum;
+            }
+        }
 
         return activation.activate(z);
     }
@@ -44,31 +61,41 @@ public class DenseLayer implements Layer {
     @Override
     public double[][] backward(double[][] gradOutput) {
 
-        // dL/dZ = dL/dA ⊙ activation'(Z)
-        double[][] gradZ = Matrix.hadamard(
-                gradOutput,
-                activation.derivative(zCache)
-        );
+        int batchSize = gradOutput.length;
 
-        // dL/dW = Xᵀ · dZ
-        gradWeights = Matrix.dot(
-                Matrix.transpose(inputCache),
-                gradZ
-        );
+        gradWeights = new double[outputSize][inputSize];
+        gradBiases = new double[1][outputSize];
 
-        // dL/dB = sum rows of dZ
-        gradBias = Matrix.sumRows(gradZ);
+        double[][] gradInput = new double[batchSize][inputSize];
 
-        // dL/dX = dZ · Wᵀ
-        return Matrix.dot(
-                gradZ,
-                Matrix.transpose(weights)
-        );
+        double[][] activationDerivative = activation.derivative(z);
+
+        for (int b = 0; b < batchSize; b++) {
+            for (int i = 0; i < outputSize; i++) {
+
+                double delta = gradOutput[b][i] * activationDerivative[b][i];
+                gradBiases[0][i] += delta;
+
+                for (int j = 0; j < inputSize; j++) {
+                    gradWeights[i][j] += delta * input[b][j];
+                    gradInput[b][j] += weights[i][j] * delta;
+                }
+            }
+        }
+
+        for (int i = 0; i < outputSize; i++) {
+            gradBiases[0][i] /= batchSize;
+            for (int j = 0; j < inputSize; j++) {
+                gradWeights[i][j] /= batchSize;
+            }
+        }
+
+        return gradInput;
     }
 
     @Override
     public void updateParameters(Optimizer optimizer) {
         optimizer.update(weights, gradWeights);
-        optimizer.update(bias, gradBias);
+        optimizer.update(biases, gradBiases);
     }
 }
