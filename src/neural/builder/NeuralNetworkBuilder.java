@@ -135,6 +135,9 @@ public class NeuralNetworkBuilder {
         if (network.getOptimizer() == null)
             throw new IllegalStateException("Optimizer not set.");
 
+        if (network.getLayers().isEmpty())
+            throw new IllegalStateException("Neural network must have at least one layer.");
+
         return network;
     }
 }

@@ -45,6 +45,10 @@ public class NeuralNetwork {
         layers.remove(index);
     }
 
+    public List<Layer> getLayers() {
+        return layers;
+    }
+
     public void setLoss(LossFunction loss) {
         this.loss = loss;
     }
@@ -130,7 +134,7 @@ public class NeuralNetwork {
                     epoch, epochs, epochLoss
             );
 
-            // ✅ Early stopping
+            // Early stopping
             if (epochLoss <= lossThreshold) {
                 System.out.println(
                         "Training stopped early: loss threshold reached."

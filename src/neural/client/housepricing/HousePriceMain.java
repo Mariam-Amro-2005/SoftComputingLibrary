@@ -30,7 +30,7 @@ public class HousePriceMain {
         NeuralNetwork model =
                 HousePriceTrainer.buildModel(X[0].length);
 
-        HousePriceTrainer.train(model, X, y, 1000, 8, 0.001);
+        HousePriceTrainer.train(model, X, y, 500000, 8, 0.001);
 
         // Prediction example
         double[][] testHouse = {
