@@ -48,7 +48,7 @@ public class HousePriceMain {
         model.train(
                 X,
                 y,
-                500000,
+                11700,
                 8,
                 0.001
         );
