@@ -1,34 +1,23 @@
 package neural.initializers;
 
 import neural.core.Initializer;
-
 import java.util.Random;
 
-public class RandomUniformInitializer implements Initializer {
+public class HeInitializer implements Initializer {
 
-    private final double min;
-    private final double max;
     private final Random random = new Random();
-
-    public RandomUniformInitializer(){
-        this(-0.05, 0.05);   // adding default values
-    }
-
-    public RandomUniformInitializer(double min, double max) {
-        this.min = min;
-        this.max = max;
-    }
 
     @Override
     public double[][] init(int inputSize, int outputSize) {
+        double stdDev = Math.sqrt(2.0 / inputSize);
         double[][] weights = new double[inputSize][outputSize];
 
         for (int i = 0; i < inputSize; i++) {
             for (int j = 0; j < outputSize; j++) {
-                weights[i][j] = min + (max - min) * random.nextDouble();
+                weights[i][j] = random.nextGaussian() * stdDev;
             }
         }
+
         return weights;
     }
 }
-

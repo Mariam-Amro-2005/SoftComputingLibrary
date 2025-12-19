@@ -1,16 +1,31 @@
 package neural.model;
 
+import neural.activations.ReLU;
 import neural.core.Layer;
 import neural.core.LossFunction;
 import neural.core.Optimizer;
+import neural.losses.MSE;
+import neural.optimizers.SGD;
 
 import java.util.*;
 
 public class NeuralNetwork {
 
     private final List<Layer> layers;
-    private final LossFunction loss;
-    private final Optimizer optimizer;
+    private LossFunction loss;
+    private Optimizer optimizer;
+
+    public NeuralNetwork() {
+        this(new MSE(), new SGD());
+    }
+
+    public NeuralNetwork(LossFunction loss) {
+        this(loss, new SGD());
+    }
+
+    public NeuralNetwork(Optimizer optimizer) {
+        this(new MSE(), optimizer);
+    }
 
     public NeuralNetwork(LossFunction loss, Optimizer optimizer) {
         this.layers = new ArrayList<>();
@@ -20,6 +35,30 @@ public class NeuralNetwork {
 
     public void addLayer(Layer layer) {
         layers.add(layer);
+    }
+
+    public void removeLayer(Layer layer) {
+        layers.remove(layer);
+    }
+
+    public void removeLayerAt(int index) {
+        layers.remove(index);
+    }
+
+    public void setLoss(LossFunction loss) {
+        this.loss = loss;
+    }
+
+    public LossFunction getLoss() {
+        return loss;
+    }
+
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+    }
+
+    public Optimizer getOptimizer() {
+        return optimizer;
     }
 
     public double[][] forward(double[][] input) {
@@ -35,6 +74,9 @@ public class NeuralNetwork {
     }
 
     private void update() {
+        if (optimizer == null)
+            throw new IllegalStateException("Optimizer not set.");
+
         for (Layer layer : layers)
             layer.updateParameters(optimizer);
     }
@@ -58,6 +100,7 @@ public class NeuralNetwork {
             Collections.shuffle(indices, random);
 
             double epochLoss = 0.0;
+            int batchCount = 0;
 
             for (int start = 0; start < samples; start += batchSize) {
 
@@ -73,12 +116,14 @@ public class NeuralNetwork {
 
                 double[][] predicted = forward(Xbatch);
                 epochLoss += loss.compute(predicted, ybatch);
+                batchCount++;
 
                 backward(predicted, ybatch);
                 update();
             }
 
-            epochLoss /= (samples / (double) batchSize);
+//            epochLoss /= (samples / (double) batchSize);
+            epochLoss /= batchCount;
 
             System.out.printf(
                     "Epoch %d/%d - Loss: %.6f%n",

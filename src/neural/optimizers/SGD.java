@@ -6,6 +6,10 @@ public class SGD implements Optimizer {
 
     private final double learningRate;
 
+    public SGD() {
+        this(0.5);
+    }
+
     public SGD(double learningRate) {
         this.learningRate = learningRate;
     }

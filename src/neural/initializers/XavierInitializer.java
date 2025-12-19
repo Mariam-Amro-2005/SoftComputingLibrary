@@ -1,5 +1,7 @@
 package neural.initializers;
 
+import neural.core.Initializer;
+
 import java.util.Random;
 
 public class XavierInitializer implements Initializer {

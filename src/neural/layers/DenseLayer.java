@@ -1,9 +1,11 @@
 package neural.layers;
 
+import neural.activations.ReLU;
 import neural.core.Layer;
 import neural.core.ActivationFunction;
 import neural.core.Optimizer;
-import neural.initializers.Initializer;
+import neural.core.Initializer;
+import neural.initializers.XavierInitializer;
 import neural.utils.Matrix;
 
 public class DenseLayer implements Layer {
@@ -20,6 +22,21 @@ public class DenseLayer implements Layer {
     // Gradients
     private double[][] gradWeights;
     private double[][] gradBias;
+
+    public DenseLayer(int inputSize, int outputSize) {
+        this(inputSize, outputSize, new ReLU(), new XavierInitializer());
+    }
+
+    public DenseLayer(int inputSize, int outputSize,
+                      ActivationFunction activation) {
+        this(inputSize, outputSize, activation, new XavierInitializer());
+    }
+
+    public DenseLayer(int inputSize,
+                      int outputSize,
+                      Initializer initializer) {
+        this(inputSize, outputSize, new ReLU(), initializer);
+    }
 
     public DenseLayer(int inputSize,
                       int outputSize,
