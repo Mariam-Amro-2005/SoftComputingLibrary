@@ -3,67 +3,99 @@ package neural.utils;
 import java.util.Random;
 
 public class Dataset {
+    public static NormalizationStats computeNormalizationStats(double[][] data, NormalizationType type)
+     {
+        return switch (type) {
+            case Z_SCORE -> computeZScoreStats(data);
+            case MIN_MAX -> computeMinMaxStats(data);
+        };
+    }
 
-    public static double[][] normalize(double[][] data, NormalizationType type) {
-        switch (type) {
-            case Z_SCORE:
-                return zScoreNormalize(data);
-            case MIN_MAX:
-            default:
-                return minMaxNormalize(data);
+    public static NormalizationStats computeNormalizationStats(double[][] data) {
+        return computeNormalizationStats(data, NormalizationType.MIN_MAX);
+    }
+
+    public static double[][] normalize(double[][] data, NormalizationStats stats, NormalizationType type) {
+        return switch (type) {
+            case Z_SCORE -> applyZScore(data, stats);
+            case MIN_MAX -> applyMinMax(data, stats);
+        };
+    }
+
+    public static double[][] normalize(double[][] data, NormalizationStats stats) {
+        return normalize(data, stats, NormalizationType.MIN_MAX);
+    }
+
+    private static NormalizationStats computeMinMaxStats(double[][] data) {
+        int nFeatures = data[0].length;
+        double[] min = new double[nFeatures];
+        double[] max = new double[nFeatures];
+
+        for (int j = 0; j < nFeatures; j++) {
+            min[j] = Double.MAX_VALUE;
+            max[j] = -Double.MAX_VALUE;
+
+            for (double[] row : data) {
+                min[j] = Math.min(min[j], row[j]);
+                max[j] = Math.max(max[j], row[j]);
+            }
+
+            if (max[j] - min[j] == 0) {
+                max[j] = min[j] + 1;
+            }
         }
+
+        return new NormalizationStats(min, max, null, null);
     }
 
-    public static double[][] normalize(double[][] data, String typeStr) {
-        return normalize(data, NormalizationType.fromString(typeStr));
-    }
-
-    public static double[][] normalize(double[][] data) {
-        return normalize(data, NormalizationType.MIN_MAX);
-    }
-
-    private static double[][] minMaxNormalize(double[][] data) {
+    private static NormalizationStats computeZScoreStats(double[][] data) {
         int nSamples = data.length;
-        if (nSamples == 0) return new double[0][0];
+        int nFeatures = data[0].length;
+
+        double[] mean = new double[nFeatures];
+        double[] std = new double[nFeatures];
+
+        for (int j = 0; j < nFeatures; j++) {
+            for (double[] row : data)
+                mean[j] += row[j];
+            mean[j] /= nSamples;
+
+            for (double[] row : data)
+                std[j] += Math.pow(row[j] - mean[j], 2);
+            std[j] = Math.sqrt(std[j] / nSamples);
+
+            if (std[j] == 0) std[j] = 1;
+        }
+
+        return new NormalizationStats(null, null, mean, std);
+    }
+
+    private static double[][] applyMinMax(double[][] data, NormalizationStats stats) {
+        int nSamples = data.length;
         int nFeatures = data[0].length;
         double[][] normalized = new double[nSamples][nFeatures];
 
-        for (int j = 0; j < nFeatures; j++) {
-            double min = Double.MAX_VALUE;
-            double max = Double.MIN_VALUE;
-            for (int i = 0; i < nSamples; i++) {
-                if (data[i][j] < min) min = data[i][j];
-                if (data[i][j] > max) max = data[i][j];
-            }
-            double range = max - min;
-            if (range == 0) range = 1;
-            for (int i = 0; i < nSamples; i++) {
-                normalized[i][j] = (data[i][j] - min) / range;
+        for (int i = 0; i < nSamples; i++) {
+            for (int j = 0; j < nFeatures; j++) {
+                normalized[i][j] =
+                        (data[i][j] - stats.min[j]) /
+                                (stats.max[j] - stats.min[j]);
             }
         }
 
         return normalized;
     }
 
-    private static double[][] zScoreNormalize(double[][] data) {
+    private static double[][] applyZScore(double[][] data, NormalizationStats stats) {
         int nSamples = data.length;
-        if (nSamples == 0) return new double[0][0];
         int nFeatures = data[0].length;
         double[][] normalized = new double[nSamples][nFeatures];
 
-        for (int j = 0; j < nFeatures; j++) {
-            double sum = 0;
-            for (int i = 0; i < nSamples; i++) sum += data[i][j];
-            double mean = sum / nSamples;
-
-            double varianceSum = 0;
-            for (int i = 0; i < nSamples; i++)
-                varianceSum += Math.pow(data[i][j] - mean, 2);
-            double std = Math.sqrt(varianceSum / nSamples);
-            if (std == 0) std = 1; // avoid division by zero
-
-            for (int i = 0; i < nSamples; i++)
-                normalized[i][j] = (data[i][j] - mean) / std;
+        for (int i = 0; i < nSamples; i++) {
+            for (int j = 0; j < nFeatures; j++) {
+                normalized[i][j] =
+                        (data[i][j] - stats.mean[j]) / stats.std[j];
+            }
         }
 
         return normalized;
@@ -75,11 +107,9 @@ public class Dataset {
         int nTrain = (int) (nSamples * trainFraction);
 
         double[][] shuffled = new double[nSamples][];
-        for (int i = 0; i < nSamples; i++) {
+        for (int i = 0; i < nSamples; i++)
             shuffled[i] = data[i].clone();
-        }
 
-        // Shuffle dataset
         Random rand = new Random(seed);
         for (int i = nSamples - 1; i > 0; i--) {
             int j = rand.nextInt(i + 1);
@@ -88,17 +118,12 @@ public class Dataset {
             shuffled[j] = temp;
         }
 
-        // Split
-        double[][] trainData = new double[nTrain][];
-        double[][] testData = new double[nSamples - nTrain][];
+        double[][] train = new double[nTrain][];
+        double[][] test = new double[nSamples - nTrain][];
 
-        System.arraycopy(shuffled, 0, trainData, 0, nTrain);
-        System.arraycopy(shuffled, nTrain, testData, 0, nSamples - nTrain);
+        System.arraycopy(shuffled, 0, train, 0, nTrain);
+        System.arraycopy(shuffled, nTrain, test, 0, test.length);
 
-        return new double[][][]{trainData, testData};
-    }
-
-    public static double[][][] trainTestSplit(double[][] data) {
-        return trainTestSplit(data, 0.8, System.currentTimeMillis());
+        return new double[][][]{train, test};
     }
 }

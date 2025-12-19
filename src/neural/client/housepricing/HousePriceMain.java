@@ -1,12 +1,17 @@
 package neural.client.housepricing;
 
+import neural.builder.NeuralNetworkBuilder;
 import neural.model.NeuralNetwork;
+import neural.utils.Dataset;
+import neural.utils.NormalizationStats;
+import neural.utils.NormalizationType;
+import neural.evaluation.Accuracy;
 
 public class HousePriceMain {
 
     public static void main(String[] args) {
 
-        // Example dataset
+        // Example in-memory dataset
         double[][] X = {
                 {120, 3, 2, 10},
                 {80,  2, 1, 20},
@@ -23,21 +28,45 @@ public class HousePriceMain {
                 {120000}
         };
 
-        // Normalize features
-        X = HousePricePreprocessor.normalize(X);
+        // Normalize using TRAIN statistics
+        NormalizationStats stats =
+                Dataset.computeNormalizationStats(X, NormalizationType.MIN_MAX);
 
-        // Build and train model
+        X = Dataset.normalize(X, stats);
+
+        // Build neural network
         NeuralNetwork model =
-                HousePriceTrainer.buildModel(X[0].length);
+                NeuralNetworkBuilder.create()
+                        .loss("mse")
+                        .optimizer("sgd", 0.00000001)
+                        .dense(4, 16, "relu")
+                        .dense(16, 8, "relu")
+                        .dense(8, 1, "linear")
+                        .build();
 
-        HousePriceTrainer.train(model, X, y, 500000, 8, 0.001);
+        // Train
+        model.train(
+                X,
+                y,
+                500000,
+                8,
+                0.001
+        );
+
+        // Evaluate on training data
+        double[][] trainPredictions = model.predict(X);
+        double trainMSE = Accuracy.mse(trainPredictions, y);
+
+        System.out.println(
+                "Training MSE: " + trainMSE
+        );
 
         // Prediction example
         double[][] testHouse = {
                 {140, 3, 2, 7}
         };
 
-        testHouse = HousePricePreprocessor.normalize(testHouse);
+        testHouse = Dataset.normalize(testHouse, stats);
 
         double[][] prediction = model.predict(testHouse);
 
