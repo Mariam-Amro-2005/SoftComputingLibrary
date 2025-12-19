@@ -144,6 +144,17 @@ public class NeuralNetwork {
         }
     }
 
+    public void train(double[][] X, double[][] y) {
+        train(X, y, 1000, 32, 0.0);
+    }
+
+    public void train(double[][] X, double[][] y, int epochs) {
+        train(X, y, epochs, 32, 0.0);
+    }
+
+    public void train(double[][] X, double[][] y, int epochs, int batchSize) {
+        train(X, y, epochs, batchSize, 0.0);
+    }
 
     public double[][] predict(double[][] input) {
         return forward(input);
