@@ -82,11 +82,16 @@ metrics.stop();
 
 ## 📊 Performance & Visualization
 
-The `PerformanceMetrics` class ensures you never lose track of your model's progress:
+The `PerformanceMetrics` class ensures you never lose track of your model's progress by capturing real-time data from the JVM and the evolution loop.
 
-* **CSV Export:** Automatically saves fitness history for external analysis in Excel or Python.
-* **JavaFX Plotting:** Generates live line charts comparing **Best Fitness vs. Average Fitness** across generations.
-* **Resource Tracking:** Monitors total execution time and heap memory usage delta.
+* **Terminal Reporting:** Outputs a comprehensive summary including total runtime (nanosecond precision), final fitness, and memory consumption deltas.
+* **JavaFX Plotting:** Launches an interactive window displaying a line chart of **Best Fitness vs. Average Fitness** across all generations.
+* **CSV Export:** Automatically saves historical data to `fitness_history.csv` for post-run analysis.
+
+<div align="center">
+<img src="GeneticOutput.jpeg" width="90%" alt="Genetic Algorithm Result and JavaFX Graph">
+<p><i>Example output: Terminal metrics and JavaFX fitness visualization running in parallel.</i></p>
+</div>
 
 ---
 
