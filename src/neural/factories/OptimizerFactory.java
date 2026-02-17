@@ -13,4 +13,13 @@ public class OptimizerFactory {
             );
         };
     }
+
+    public static Optimizer create(String name) {
+        return switch (name.toLowerCase()) {
+            case "sgd" -> new SGD();
+            default -> throw new IllegalArgumentException(
+                    "Unknown optimizer: " + name
+            );
+        };
+    }
 }
