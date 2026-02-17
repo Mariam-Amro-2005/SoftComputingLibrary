@@ -6,7 +6,7 @@ The **Genetic Algorithms (GA) Module** is a high-performance, modular Java frame
 
 ## 🏗 Core Architecture: The "Genetic" Hierarchy
 
-The module follows a strictly decoupled data structure, ensuring that the evolution engine doesn't need to know the specifics of the data it is optimizing.
+The module follows a strictly decoupled data structure, ensuring that the evolution engine doesn't need to know the specifics of the data it is optimizing. This is achieved through a **Registry-based Initialization** system.
 
 ### 1. The Generic Gene Interface (`Gene<T>`)
 
@@ -18,11 +18,13 @@ Every gene implements a common interface, allowing for a variety of data types w
 
 ### 2. The Chromosome Wrapper
 
-A `Chromosome` is more than just a list of genes; it is a self-contained unit of evolution containing:
+A `Chromosome` is a self-contained unit of evolution. Instead of hardcoding how genes are created, it delegates this task to the **`GeneInitializerRegistry`**.
 
-* **`List<Gene<?>>`:** The genetic blueprint.
+* **`List<Gene<?>>`:** The genetic blueprint, initialized dynamically via the Registry.
 * **`fitness`:** The calculated quality of the individual.
-* **`RepresentationType`:** An enum (BINARY, INTEGER, FLOATING_POINT, JOB) that guides the `OperatorFactory` in choosing compatible algorithms.
+* **`RepresentationType`:** An enum (BINARY, INTEGER, FLOATING_POINT, JOB) that acts as a key to retrieve the correct `GeneInitializer`.
+
+
 
 ---
 
@@ -85,3 +87,23 @@ The `PerformanceMetrics` class ensures you never lose track of your model's prog
 * **CSV Export:** Automatically saves fitness history for external analysis in Excel or Python.
 * **JavaFX Plotting:** Generates live line charts comparing **Best Fitness vs. Average Fitness** across generations.
 * **Resource Tracking:** Monitors total execution time and heap memory usage delta.
+
+---
+
+## 🛠 Extensibility: Adding Custom Representations
+
+The library is designed to be a "plug-and-play" framework. You can add support for new problem domains (like Image Evolution or Traveling Salesperson) in three steps without modifying the core engine code:
+
+1. **Implement `Gene<T>`:** Create a class for your new data type.
+2. **Define `GeneInitializer`:** Create a functional strategy (or lambda) that defines how to generate a list of your custom genes.
+3. **Register:** Map a new `RepresentationType` enum value to your initializer in the `GeneInitializerRegistry`.
+
+```java
+// Example: Registering a custom 'Color' representation
+GeneInitializerRegistry.register(RepresentationType.COLOR, (length, random) -> {
+    List<Gene<?>> genes = new ArrayList<>();
+    for (int i = 0; i < length; i++) genes.add(new ColorGene(random));
+    return genes;
+});
+
+```
