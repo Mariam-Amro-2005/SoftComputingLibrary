@@ -1,77 +1,134 @@
-## 🏗 Core Architecture: The Fuzzy Inference System
+# 🧬 Soft Computing Java Library
 
-The module follows a strictly decoupled pipeline, ensuring that the engine can process rules regardless of whether they lead to a fuzzy set (Mamdani) or a crisp value (Sugeno).
+### A Modular Framework for Artificial Intelligence & Bio-Inspired Computing
 
-### 1. The Rule Anatomy
+Welcome to the **Soft Computing Java Library**. This project is a multi-phase implementation of core AI paradigms: **Evolutionary Computing (Genetic Algorithms)**, **Fuzzy Inference Systems**, and **Artificial Neural Networks**.
 
-Rules are structured as a collection of **Antecedents** (the "IF" part) and **Consequents** (the "THEN" part).
-
-* **Antecedents**: Link a `LinguisticVariable` to a specific `FuzzySet` label (e.g., "Speed is High").
-* **Polymorphic Consequents**: The engine uses the `Consequent` interface to support two distinct behaviors:
-* **Mamdani**: Maps to a `FuzzySet` on the output variable.
-* **Sugeno**: Maps directly to a crisp `constant` value or linear function.
-
-
-
-### 2. Rule Base & Persistence
-
-The `RuleBase` acts as the system's central "brain," managing the collection of rules.
-
-* **Dynamic Control**: Rules can be enabled, disabled, or weighted individually at runtime to tweak system behavior without code changes.
-* **File I/O**: Supports saving and loading rule sets via an `AbstractRuleParser`, allowing logic to be stored in external configuration files.
+Built with a focus on clean code, the Strategy pattern, and the Builder pattern, this library is designed to be highly extensible, allowing researchers and developers to plug in custom operators, membership functions, or layer types with minimal friction.
 
 ---
 
-## 🔢 Logic Operators: The Mathematical Core
+## 📑 Table of Contents
 
-The engine's reasoning is powered by swappable mathematical strategies. You can mix and match these to change how the system "thinks":
-
-| Category | Implemented Types | Description |
-| --- | --- | --- |
-| **T-Norms (AND)** | `MinTNorm`, `ProductTNorm` | Combines multiple IF conditions. |
-| **S-Norms (OR)** | `MaxSnorm`, `SumSnorm` | Combines multiple overlapping rules. |
-| **Implications** | `MinImplication`, `ProductImplication` | Scales the output fuzzy set based on input strength. |
+1. Genetic Algorithm Engine (Phase 1)
+2. Fuzzy Logic System (Phase 2)
+3. Neural Network Framework (Phase 3)
+4. Design Patterns Used
+5. Installation & Requirements
 
 ---
 
-## 📈 Case Studies: Practical Applications
+## 🧬 Genetic Algorithm Engine (Phase 1)
 
-### Mamdani: Driver Risk Assessment
+The GA module provides a robust framework for solving optimization and search problems using Darwinian principles.
 
-Evaluates driving safety based on **Speed** and **Braking Intensity**.
+### Key Features
 
-* **Input**: Speed (0–120 km/h), Braking (0–100%).
-* **Output**: Risk Level (Fuzzy: Low, Medium, High).
-* **Defuzzification**: Uses `CentroidDefuzzifier` to provide a specific risk percentage.
+* **Representation Agnostic**: Native support for Binary, Integer, Floating-Point, and custom Object-based (Permutation) chromosomes.
+* **Pluggable Operators**:
+* **Selection**: Tournament, Roulette Wheel.
+* **Crossover**: Single-point, Two-point, Uniform, and Order-Based (for permutations).
+* **Mutation**: Bit-flip, Swap, and Gaussian Range mutations.
+* **Replacement**: Steady-state, Elitism, and Generational.
+* **Performance Tracking**: Integrated `PerformanceMetrics` class that exports fitness history to CSV and generates JavaFX visualizations.
 
-### Sugeno: Restaurant Tipping
+### Case Study: CPU Job Scheduling
 
-A functional approach to calculating a tip based on **Service Quality** and **Food Quality**.
+The library includes a real-world scheduling case study where the GA optimizes the sequence of jobs to minimize total waiting time and maximize CPU utilization.
 
-* **Input**: Service (0–10), Food (0–10).
-* **Output**: Tip (Crisp: 5%, 15%, 25%).
-* **Logic**: Uses weighted averages for fast, precise numerical calculation.
+```java
+GeneticAlgorithmEngine ga = new GeneticAlgorithmEngine.Builder(params, fitnessFunction)
+    .withSelection(new TournamentSelection(3))
+    .withCrossover(new OrderCrossover())
+    .build();
+
+```
 
 ---
 
-## 🛠 Extensibility: Custom Logic
+## 🌫️ Fuzzy Logic System (Phase 2)
 
-The library is designed to be a "plug-and-play" framework. You can extend the system's reasoning capabilities in three steps:
+The Fuzzy Logic module enables "approximate reasoning" for systems where binary true/false logic is insufficient.
 
-1. **Implement the Interface**: Create a new class implementing `TNorm`, `SNorm`, or `MembershipFunction`.
-2. **Factory Registration**: If adding a new Membership Function, add it to the `MembershipFactory`.
-3. **Fluent Assembly**: Use the `FuzzySystemBuilder` to inject your custom logic into the engine.
+### Key Features
+
+* **Linguistic Variables**: Define complex input/output variables with overlapping Fuzzy Sets.
+* **Membership Functions**: Includes Triangular and Trapezoidal implementations (extensible via the `MembershipFunction` interface).
+* **Multiple Inference Engines**:
+* **Mamdani**: For intuitive, human-like linguistic output.
+* **Sugeno**: For mathematically efficient, crisp-weighted average output.
+
+
+* **Dynamic Rule Base**: A powerful `RuleBase` API that supports adding rules via code or parsing them from external strings/files.
+
+### Case Study: Risk Assessment & Tipping
+
+The library demonstrates Mamdani inference for "Driver Risk Assessment" and Sugeno inference for a "Service-to-Tip" calculation system.
 
 ```java
 FuzzyEngine engine = new FuzzySystemBuilder()
     .setMode(FuzzyEngine.Mode.MAMDANI)
-    .setMamdaniInference(new MamdaniInference(
-        new ProductTNorm(),      // Custom AND
-        new MaxSNorm(),          // Custom OR
-        new ProductImplication() // Custom THEN
-    ))
-    .setDefuzzifier(new CentroidDefuzzifier())
-    .addRule(myCustomRule)
+    .addRule(new Rule("IF Speed IS High AND Braking IS Soft THEN Risk IS High"))
     .build();
 
 ```
+
+---
+
+## 🧠 Neural Network Framework (Phase 3)
+
+A modular, feedforward Neural Network library designed for supervised learning tasks (Regression and Classification).
+
+### Key Features
+
+* **Layer-Based Architecture**: Add `DenseLayer` objects with configurable input/output dimensions.
+* **Activation Functions**: Support for `ReLU`, `Sigmoid`, `Tanh`, and `Linear`.
+* **Weight Initializers**: Xavier/He initialization for stable training, alongside Random Uniform options.
+* **Training & Optimization**:
+* Full implementation of **Backpropagation** using the chain rule.
+* Stochastic Gradient Descent (**SGD**) optimizer.
+* Support for **MSE** (Regression) and **Cross-Entropy** (Classification) loss functions.
+
+
+* **Data Utilities**: Includes `Dataset` utilities for Train/Test splitting and Min-Max/Z-Score normalization.
+
+### Case Study: House Price Prediction
+
+A regression model that predicts property values based on features like square footage, bedrooms, and age, utilizing the `NeuralNetworkBuilder` for a clean, fluent API.
+
+```java
+NeuralNetwork model = NeuralNetworkBuilder.create()
+    .dense(4, 16, "relu")
+    .dense(16, 1, "linear")
+    .loss("mse")
+    .optimizer("sgd", 0.001)
+    .build();
+
+```
+
+---
+
+## 🛠 Design Patterns Used
+
+To ensure the library remains a professional-grade tool, we utilized several software design patterns:
+
+* **Builder Pattern**: Used in `GeneticAlgorithmEngine` and `NeuralNetworkBuilder` to manage complex object creation.
+* **Strategy Pattern**: Used for Crossover, Mutation, and Activation functions to allow runtime switching of algorithms.
+* **Factory Pattern**: Centralized creation of operators and layers via `OperatorFactory` and `LayerFactory`.
+* **Registry Pattern**: Used in `GeneInitializerRegistry` to decouple chromosome creation from specific data types.
+
+---
+
+## 🚀 Installation & Requirements
+
+* **Language**: Java 17+
+* **Graphics**: JavaFX (required only for GA performance visualization)
+* **Build System**: Maven or Gradle (recommended for dependency management)
+
+### Running the Demos
+
+Each phase contains a `Main` or `App` class within the `client` package:
+
+1. **GA**: Run `genetic.client.Main` or `CLIApp`.
+2. **Fuzzy**: Run `fuzzylogic.client.MamdaniMain` or `SugenoMain`.
+3. **Neural**: Run `neural.client.housepricing.HousePriceMain`.
